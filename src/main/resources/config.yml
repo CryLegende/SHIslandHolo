@@ -1,0 +1,57 @@
+holograms:
+  "0-4": # Le niveau ou l'hologramme sera affiché
+    position: '0,4,8' # Position à partir du centre de l'île
+    lines:
+        - '&7&l« &e&lMessage système &8&l»'
+        - '&fBienvenue, ici tu es sur ton île !'
+        - '&fTon premier objectif sera de survivre,'
+        - '&fpour ça, tu as quelques ressources de'
+        - '&fbase dans ton coffre ainsi qu''un'
+        - '&fgénérateur à cobble. Bonne chance !'
+        - '&f'
+        - '&fPour progresser, complète tes'
+        - '&fdéfis &7(&e/quest&7) &fafin de débloquer'
+        - '&fpleins de nouveaux items.'
+        - '&f'
+        - '&7(Cliquez pour cacher)'
+  "6-10":
+    position: '0,4,8'
+    lines:
+        - '&7&l« &e&lMessage système &8&l»'
+        - '&fEnvie de jouer avec des amis ?'
+        - '&fTu peux inviter d''autres joueurs'
+        - '&favec la commande &e/is invite <pseudo>'
+        - '&f'
+        - '&7(Cliquez pour cacher)'
+  "20-35":
+    position: '0,4,8'
+    lines:
+        - '&7&l« &e&lMessage système &8&l»'
+        - '&fDéjà niveau %superior_island_level%... Voici un'
+        - '&fobjectif bien plus compliqué:'
+        - '&bAtteindre le niveau 100 &f!'
+        - '&fqu''en dis-tu ?'
+        - '&f'
+        - '&7(Cliquez pour cacher)'
+  "80-200":
+    position: '0,4,8'
+    lines:
+        - '&7&l« &e&lMessage système &8&l»'
+        - '&fN''oublie pas de voter, cela t''aidera'
+        - '&fgrandement à progresser ! &e/vote'
+        - ''
+        - '&7Et en plus, ça soutient le serveur &4❤'
+        - '&f'
+        - '&7(Cliquez pour cacher)'
+#  "999":
+#    position: '0,4,8'
+#    lines:
+#      - '&6&l✨ &e&lEASTER EGG &6&l✨'
+#      - '&fCe message s''affiche uniquement'
+#      - '&fau &eniveau 999 &f!'
+#      - '&f'
+#      - '&fC''est inutile, mais c''est beau !'
+#      - '&f'
+#      - '&4[code secret1] &7(à faire)'
+#      - '&f'
+#      - '&7(Cliquez pour cacher)'
