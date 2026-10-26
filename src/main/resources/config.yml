@@ -1,5 +1,5 @@
 holograms:
-  "0-4": # Le niveau ou l'hologramme sera affiché
+  "0-79": # Le niveau ou l'hologramme sera affiché (une île neuve démarre à 64-66)
     position: '0,4,8' # Position à partir du centre de l'île
     lines:
         - '&7&l« &e&lMessage système &8&l»'
@@ -14,7 +14,7 @@ holograms:
         - '&fpleins de nouveaux items.'
         - '&f'
         - '&7(Cliquez pour cacher)'
-  "6-10":
+  "80-149":
     position: '0,4,8'
     lines:
         - '&7&l« &e&lMessage système &8&l»'
@@ -23,17 +23,17 @@ holograms:
         - '&favec la commande &e/is invite <pseudo>'
         - '&f'
         - '&7(Cliquez pour cacher)'
-  "20-35":
+  "150-399":
     position: '0,4,8'
     lines:
         - '&7&l« &e&lMessage système &8&l»'
         - '&fDéjà niveau %superior_island_level%... Voici un'
         - '&fobjectif bien plus compliqué:'
-        - '&bAtteindre le niveau 100 &f!'
+        - '&bAtteindre le niveau 300 &f!'
         - '&fqu''en dis-tu ?'
         - '&f'
         - '&7(Cliquez pour cacher)'
-  "80-200":
+  "400-2499":
     position: '0,4,8'
     lines:
         - '&7&l« &e&lMessage système &8&l»'

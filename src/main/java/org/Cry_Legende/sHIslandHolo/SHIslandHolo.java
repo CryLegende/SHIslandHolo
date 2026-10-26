@@ -2,6 +2,7 @@ package org.Cry_Legende.sHIslandHolo;
 
 import com.bgsoftware.superiorskyblock.api.events.*;
 import com.bgsoftware.superiorskyblock.api.island.Island;
+import com.bgsoftware.superiorskyblock.api.world.Dimension;
 import com.bgsoftware.superiorskyblock.api.wrappers.SuperiorPlayer;
 import com.bgsoftware.superiorskyblock.api.SuperiorSkyblockAPI;
 import eu.decentsoftware.holograms.api.DHAPI;
@@ -91,6 +92,18 @@ public class SHIslandHolo extends JavaPlugin implements Listener {
         return null;
     }
 
+    /**
+     * SSB2 2026.3 attend une Dimension (et non plus un World.Environment) pour trouver le centre d'une île.
+     */
+    private static Dimension normalDimension() {
+        for (Dimension dimension : Dimension.values()) {
+            if (dimension.getEnvironment() == org.bukkit.World.Environment.NORMAL) {
+                return dimension;
+            }
+        }
+        return Dimension.getByName("NORMAL");
+    }
+
     private void updateIslandHologram(Island island, int islandLevel, int islandOldLevel) {
         if (islandLevel <= islandOldLevel) {
             return;
@@ -119,11 +132,11 @@ public class SHIslandHolo extends JavaPlugin implements Listener {
             return;
         }
 
-        org.bukkit.World skyblockWorld = island.getCenter(org.bukkit.World.Environment.NORMAL).getWorld();
-        Location holoLocation = new Location(skyblockWorld,
-            island.getCenter(org.bukkit.World.Environment.NORMAL).getX() + hologramConfig.offset.getX(),
-            island.getCenter(org.bukkit.World.Environment.NORMAL).getY() + hologramConfig.offset.getY(),
-            island.getCenter(org.bukkit.World.Environment.NORMAL).getZ() + hologramConfig.offset.getZ());
+        Location center = island.getCenter(normalDimension());
+        Location holoLocation = new Location(center.getWorld(),
+            center.getX() + hologramConfig.offset.getX(),
+            center.getY() + hologramConfig.offset.getY(),
+            center.getZ() + hologramConfig.offset.getZ());
 
         if (hologram == null) {
             hologram = DHAPI.createHologram(hologramName, holoLocation);
