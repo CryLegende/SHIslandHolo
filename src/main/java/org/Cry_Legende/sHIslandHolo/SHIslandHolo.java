@@ -11,24 +11,24 @@ import eu.decentsoftware.holograms.api.holograms.Hologram;
 import eu.decentsoftware.holograms.api.holograms.HologramLine;
 import eu.decentsoftware.holograms.api.holograms.HologramPage;
 import eu.decentsoftware.holograms.event.HologramClickEvent;
+import org.bukkit.Bukkit;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.Location;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class SHIslandHolo extends JavaPlugin implements Listener {
 
     private FileConfiguration config;
-    private Map<String, HologramConfig> hologramConfigs;
+    // Paliers lus une fois au chargement, dans l'ordre du fichier
+    private List<HologramTier> hologramTiers;
 
     @Override
     public void onEnable() {
@@ -46,47 +46,49 @@ public class SHIslandHolo extends JavaPlugin implements Listener {
 
     private void loadHologramConfigs() {
         getLogger().info("Chargement des configurations des hologrammes en cours...");
-        hologramConfigs = new HashMap<>();
-        for (String key : config.getConfigurationSection("holograms").getKeys(false)) {
+        hologramTiers = new ArrayList<>();
+        ConfigurationSection section = config.getConfigurationSection("holograms");
+        if (section == null) {
+            getLogger().warning("Section 'holograms' absente de config.yml : aucun hologramme.");
+            return;
+        }
+        for (String key : section.getKeys(false)) {
             String path = "holograms." + key;
-            List<String> lines = config.getStringList(path + ".lines");
-            String[] positionSplit = config.getString(path + ".position").split(",");
-            Location offset = new Location(null,
-                Double.parseDouble(positionSplit[0]),
-                Double.parseDouble(positionSplit[1]),
-                Double.parseDouble(positionSplit[2]));
-            hologramConfigs.put(key, new HologramConfig(lines, offset));
+            try {
+                List<String> lines = config.getStringList(path + ".lines");
+                String[] positionSplit = config.getString(path + ".position", "").split(",");
+                Location offset = new Location(null,
+                    Double.parseDouble(positionSplit[0].trim()),
+                    Double.parseDouble(positionSplit[1].trim()),
+                    Double.parseDouble(positionSplit[2].trim()));
+                hologramTiers.add(parseTier(key, new HologramConfig(lines, offset)));
+            } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+                getLogger().warning("Hologramme '" + key + "' ignoré : palier ou position invalide.");
+            }
         }
         getLogger().info("Configurations des hologrammes chargées.");
     }
 
-    private HologramConfig getHologramConfigForLevel(int level) {
-        for (Map.Entry<String, HologramConfig> entry : hologramConfigs.entrySet()) {
-            String key = entry.getKey();
-            HologramConfig config = entry.getValue();
+    /**
+     * Clé de palier : "min-max", "<n", ">n" ou "n".
+     */
+    private static HologramTier parseTier(String key, HologramConfig hologramConfig) {
+        if (key.contains("-")) {
+            String[] parts = key.split("-");
+            return new HologramTier(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), hologramConfig);
+        } else if (key.startsWith("<")) {
+            return new HologramTier(Integer.MIN_VALUE, Integer.parseInt(key.substring(1)) - 1, hologramConfig);
+        } else if (key.startsWith(">")) {
+            return new HologramTier(Integer.parseInt(key.substring(1)) + 1, Integer.MAX_VALUE, hologramConfig);
+        }
+        int configLevel = Integer.parseInt(key);
+        return new HologramTier(configLevel, configLevel, hologramConfig);
+    }
 
-            if (key.contains("-")) {
-                String[] parts = key.split("-");
-                int min = Integer.parseInt(parts[0]);
-                int max = Integer.parseInt(parts[1]);
-                if (level >= min && level <= max) {
-                    return config;
-                }
-            } else if (key.startsWith("<")) {
-                int specificLevel = Integer.parseInt(key.substring(1));
-                if (level < specificLevel) {
-                    return config;
-                }
-            } else if (key.startsWith(">")) {
-                int specificLevel = Integer.parseInt(key.substring(1));
-                if (level > specificLevel) {
-                    return config;
-                }
-            } else {
-                int configLevel = Integer.parseInt(key);
-                if (level == configLevel) {
-                    return config;
-                }
+    private HologramConfig getHologramConfigForLevel(int level) {
+        for (HologramTier tier : hologramTiers) {
+            if (level >= tier.min() && level <= tier.max()) {
+                return tier.config();
             }
         }
         return null;
@@ -133,6 +135,9 @@ public class SHIslandHolo extends JavaPlugin implements Listener {
         }
 
         Location center = island.getCenter(normalDimension());
+        if (center == null || center.getWorld() == null) {
+            return;
+        }
         Location holoLocation = new Location(center.getWorld(),
             center.getX() + hologramConfig.offset.getX(),
             center.getY() + hologramConfig.offset.getY(),
@@ -159,22 +164,36 @@ public class SHIslandHolo extends JavaPlugin implements Listener {
     }
 
 
+    /**
+     * SSB2 déclenche IslandWorthUpdateEvent en asynchrone : l'hologramme est toujours géré sur le thread principal.
+     */
+    private void runSync(Runnable task) {
+        if (Bukkit.isPrimaryThread()) {
+            task.run();
+        } else if (isEnabled()) {
+            Bukkit.getScheduler().runTask(this, task);
+        }
+    }
+
     @EventHandler
     public void onIslandLevelChange(IslandWorthUpdateEvent event) {
         Island island = event.getIsland();
         int islandLevel = event.getNewLevel().intValue();
         int islandOldLevel = event.getOldLevel().intValue();
+        if (islandLevel <= islandOldLevel) {
+            return;
+        }
 
-        updateIslandHologram(island, islandLevel, islandOldLevel);
+        runSync(() -> updateIslandHologram(island, islandLevel, islandOldLevel));
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onIslandcreate(IslandCreateEvent event) {
         Island island = event.getIsland();
         int islandLevel = 0;
         int islandOldLevel = -1;
 
-        updateIslandHologram(island, islandLevel, islandOldLevel);
+        runSync(() -> updateIslandHologram(island, islandLevel, islandOldLevel));
     }
 
 
@@ -194,7 +213,7 @@ public class SHIslandHolo extends JavaPlugin implements Listener {
     }
 
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onDisbandIsland(IslandDisbandEvent event) {
         Island island = event.getIsland();
 
@@ -206,7 +225,7 @@ public class SHIslandHolo extends JavaPlugin implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onIslandJoin(IslandJoinEvent event) {
         Island island = event.getIsland();
         SuperiorPlayer asPlayer = event.getPlayer();
@@ -222,7 +241,7 @@ public class SHIslandHolo extends JavaPlugin implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onIslandQuit(IslandQuitEvent event) {
         Island island = event.getIsland();
         SuperiorPlayer asPlayer = event.getPlayer();
@@ -266,4 +285,7 @@ class HologramConfig {
         this.offset = offset;
     }
 
+}
+
+record HologramTier(int min, int max, HologramConfig config) {
 }
