@@ -1,57 +1,64 @@
-holograms:
-  "0-79": # Le niveau ou l'hologramme sera affiché (une île neuve démarre à 64-66)
-    position: '0,4,8' # Position à partir du centre de l'île
-    lines:
-        - '&7&l« &e&lMessage système &8&l»'
-        - '&fBienvenue, ici tu es sur ton île !'
-        - '&fTon premier objectif sera de survivre,'
-        - '&fpour ça, tu as quelques ressources de'
-        - '&fbase dans ton coffre ainsi qu''un'
-        - '&fgénérateur à cobble. Bonne chance !'
-        - '&f'
-        - '&fPour progresser, complète tes'
-        - '&fdéfis &7(&e/quest&7) &fafin de débloquer'
-        - '&fpleins de nouveaux items.'
-        - '&f'
-        - '&7(Cliquez pour cacher)'
-  "80-149":
-    position: '0,4,8'
-    lines:
-        - '&7&l« &e&lMessage système &8&l»'
-        - '&fEnvie de jouer avec des amis ?'
-        - '&fTu peux inviter d''autres joueurs'
-        - '&favec la commande &e/is invite <pseudo>'
-        - '&f'
-        - '&7(Cliquez pour cacher)'
-  "150-399":
-    position: '0,4,8'
-    lines:
-        - '&7&l« &e&lMessage système &8&l»'
-        - '&fDéjà niveau %superior_island_level%... Voici un'
-        - '&fobjectif bien plus compliqué:'
-        - '&bAtteindre le niveau 300 &f!'
-        - '&fqu''en dis-tu ?'
-        - '&f'
-        - '&7(Cliquez pour cacher)'
-  "400-2499":
-    position: '0,4,8'
-    lines:
-        - '&7&l« &e&lMessage système &8&l»'
-        - '&fN''oublie pas de voter, cela t''aidera'
-        - '&fgrandement à progresser ! &e/vote'
-        - ''
-        - '&7Et en plus, ça soutient le serveur &4❤'
-        - '&f'
-        - '&7(Cliquez pour cacher)'
-#  "999":
-#    position: '0,4,8'
-#    lines:
-#      - '&6&l✨ &e&lEASTER EGG &6&l✨'
-#      - '&fCe message s''affiche uniquement'
-#      - '&fau &eniveau 999 &f!'
-#      - '&f'
-#      - '&fC''est inutile, mais c''est beau !'
-#      - '&f'
-#      - '&4[code secret1] &7(à faire)'
-#      - '&f'
-#      - '&7(Cliquez pour cacher)'
+# ============================================================================
+#  SHIslandHolo : conseils en hologramme sur l'île du joueur
+# ============================================================================
+#
+#  Quand un joueur se trouve sur sa propre île, un hologramme FancyHolograms
+#  visible de lui seul y affiche le premier conseil de tips.yml qui lui
+#  correspond (niveau de l'île, nombre de membres, placeholders).
+#
+#  Clic gauche sur l'hologramme : cache ce conseil, le suivant prend sa place.
+#  Clic droit : lance la commande du conseil (clé « click »), ou le cache
+#  s'il n'en a pas. Les conseils cachés sont retenus par joueur.
+#
+#  Commandes :
+#    /conseil             Réaffiche tous les conseils cachés.
+#    /conseil cacher      Cache le conseil affiché (joueurs Bedrock, sans clic).
+#    /shislandholo reload Recharge config.yml, tips.yml et messages.yml.
+#
+#  Permissions :
+#    shislandholo.conseil  /conseil (tout le monde par défaut)
+#    shislandholo.admin    /shislandholo reload (op par défaut)
+#
+#  Fichiers :
+#    config.yml    réglages (ce fichier)
+#    tips.yml      les conseils et leurs conditions
+#    messages.yml  les messages du chat
+# ============================================================================
+
+# Intervalle, en secondes, entre deux vérifications de la position des joueurs
+# et du conseil qui leur correspond.
+refresh-seconds: 3
+
+hologram:
+  # Position par défaut par rapport au centre de l'île (x, y, z).
+  # Un conseil peut avoir sa propre position (clé « position » dans tips.yml).
+  position: '0,4,8'
+  # Distance, en blocs, à partir de laquelle le joueur voit l'hologramme.
+  view-distance: 32
+  # Orientation : CENTER (suit le regard), VERTICAL (tourne sur lui-même) ou FIXED.
+  billboard: CENTER
+  # Fond du texte : default (fond gris de Minecraft), transparent, ou #AARRGGBB.
+  background: default
+  text-shadow: true
+  scale: 1.0
+  # Rafraîchissement, en secondes, des placeholders écrits dans les lignes.
+  placeholder-refresh-seconds: 10
+
+click-box:
+  # Zone cliquable posée sur l'hologramme (invisible, envoyée au joueur seul).
+  enabled: true
+  # Largeur de la zone, en blocs. La hauteur suit le nombre de lignes.
+  width: 3.0
+  # Hauteur d'une ligne de texte, en blocs, à l'échelle 1.
+  line-height: 0.25
+  # Délai minimal, en millisecondes, entre deux clics pris en compte.
+  cooldown-ms: 500
+
+new-tip:
+  # Message (messages.yml : new-tip) quand un conseil jamais vu apparaît.
+  # Le tout premier conseil d'un joueur n'est pas annoncé.
+  announce: true
+  # Son joué avec ce message. Laisser vide pour aucun son.
+  sound: BLOCK_NOTE_BLOCK_PLING
+  sound-volume: 0.6
+  sound-pitch: 1.4

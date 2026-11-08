@@ -1,0 +1,123 @@
+# ============================================================================
+#  SHIslandHolo : les conseils
+# ============================================================================
+#
+#  Les conseils sont lus dans l'ordre du fichier : le joueur voit le premier
+#  qui lui correspond et qu'il n'a pas caché. Quand il le cache (clic gauche,
+#  ou /conseil cacher), le suivant prend sa place.
+#
+#  Clés d'un conseil (toutes facultatives sauf « lines ») :
+#
+#    levels      Niveau de l'île.      « 0-71 », « 150+ », « 300 »
+#    members     Membres de l'île, chef compris.  « 1 », « 2+ », « 1-3 »
+#    conditions  Liste de comparaisons évaluées avec PlaceholderAPI pour le
+#                joueur. Toutes doivent être vraies.
+#                Opérateurs : ==  !=  >=  <=  >  <  contains
+#                Les nombres se comparent comme des nombres, le reste comme
+#                du texte (sans tenir compte des majuscules).
+#                Exemple : '%questcreator_activequest_name% != /'
+#    lines       Lignes de l'hologramme. Codes & et balises MiniMessage
+#                (<gradient:...>, <b>...) acceptés, placeholders aussi.
+#    click       Commande lancée par le joueur au clic droit, sans « / ».
+#                Sans cette clé, le clic droit cache le conseil comme le
+#                clic gauche.
+#    position    Position par rapport au centre de l'île, « x,y,z ».
+#                Par défaut : hologram.position de config.yml.
+#
+#  Le nom d'un conseil (bienvenue, defi...) sert à retenir ceux que le joueur
+#  a cachés ou déjà vus : le renommer le fait réapparaître chez tout le monde.
+# ============================================================================
+
+tips:
+
+  # Île de départ (niveau 66 à la création).
+  bienvenue:
+    levels: 0-71
+    click: quest
+    lines:
+      - '<b><gradient:#F48854:#FDFA8C>Bienvenue sur ton île</gradient></b>'
+      - ''
+      - '&7Ton &ecoffre de départ&7, ton &earbre'
+      - '&7et ton &egénérateur à cobble &7sont là'
+      - '&7pour te lancer.'
+      - ''
+      - '&7La suite se joue dans les &edéfis &7:'
+      - '&7chacun en débloque de nouveaux.'
+      - ''
+      - '&eClic droit &7: ouvrir les défis'
+      - '&8Clic gauche : cacher ce conseil'
+
+  # Défi en cours et sa progression, mis à jour toutes les 10 secondes.
+  defi:
+    levels: 72+
+    click: quest
+    conditions:
+      - '%questcreator_activequest_name% != /'
+    lines:
+      - '<b><gradient:#F48854:#FDFA8C>Ton défi en cours</gradient></b>'
+      - ''
+      - '&e%questcreator_activequest_objective%'
+      - ''
+      - '&eClic droit &7: voir tes défis'
+      - '&8Clic gauche : cacher ce conseil'
+
+  # Seul sur son île.
+  inviter:
+    levels: 72+
+    members: 1
+    lines:
+      - '<b><gradient:#F48854:#FDFA8C>Joue avec tes amis</gradient></b>'
+      - ''
+      - '&7À plusieurs, l''île grandit &ebien plus vite&7.'
+      - '&7Invite un ami avec'
+      - '&e/is invite <pseudo>'
+      - ''
+      - '&8Clic : cacher ce conseil'
+
+  metiers:
+    levels: 100+
+    click: jobs
+    lines:
+      - '<b><gradient:#F48854:#FDFA8C>Les métiers</gradient></b>'
+      - ''
+      - '&7Chaque jour, des &emissions de métier'
+      - '&7qui rapportent des &epoints &7à dépenser'
+      - '&7dans leur boutique.'
+      - ''
+      - '&eClic droit &7: ouvrir les métiers'
+      - '&8Clic gauche : cacher ce conseil'
+
+  ameliorations:
+    levels: 150+
+    click: is upgrade
+    lines:
+      - '<b><gradient:#F48854:#FDFA8C>Améliore ton île</gradient></b>'
+      - ''
+      - '&7Taille, membres, warps, PNJ :'
+      - '&7tout se débloque dans les &eaméliorations&7.'
+      - ''
+      - '&eClic droit &7: ouvrir les améliorations'
+      - '&8Clic gauche : cacher ce conseil'
+
+  vote:
+    levels: 250+
+    lines:
+      - '<b><gradient:#F48854:#FDFA8C>Vote pour le serveur</gradient></b>'
+      - ''
+      - '&7Chaque vote te donne des &erécompenses'
+      - '&7et fait connaître SkyHand &c❤'
+      - '&e/vote'
+      - ''
+      - '&8Clic : cacher ce conseil'
+
+  classement:
+    levels: 400+
+    click: is top
+    lines:
+      - '<b><gradient:#F48854:#FDFA8C>Niveau %superior_island_level%</gradient></b>'
+      - ''
+      - '&7Ton île compte parmi les grandes :'
+      - '&7vois où elle se place au &eclassement&7.'
+      - ''
+      - '&eClic droit &7: ouvrir le classement'
+      - '&8Clic gauche : cacher ce conseil'

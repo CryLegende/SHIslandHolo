@@ -1,0 +1,31 @@
+# ============================================================================
+#  SHIslandHolo : messages du chat
+# ============================================================================
+#  Codes couleur & acceptés. Format SkyHand : préfixe de la couleur du type,
+#  texte en &7, mots importants dans la couleur du type.
+#    &a succès · &e information · &6 avertissement · &c erreur
+#  Les lignes des hologrammes sont dans tips.yml.
+# ============================================================================
+
+# Un conseil jamais vu vient d'apparaître sur l'île du joueur.
+new-tip: '&7&l« &e&lSH &8&l» &7Un &enouveau conseil &7vient d''apparaître sur ton île.'
+
+# Le joueur a caché un conseil (clic ou /conseil cacher).
+tip-hidden: '&7&l« &e&lSH &8&l» &7Conseil caché. &e/conseil &7les réaffiche tous.'
+
+# /conseil : les conseils cachés sont de nouveau affichés.
+tips-restored: '&7&l« &a&lSH &8&l» &7Tes conseils d''île sont de nouveau &aaffichés&7.'
+
+# /conseil alors qu'aucun conseil n'est caché.
+nothing-hidden: '&7&l« &e&lSH &8&l» &7Aucun conseil n''est caché : ils s''affichent quand tu es &esur ton île&7.'
+
+# /conseil cacher alors qu'aucun conseil n'est affiché.
+nothing-shown: '&7&l« &c&lSH &8&l» &7Aucun conseil n''est affiché : va &csur ton île &7pour en voir un.'
+
+# /conseil sans île.
+no-island: '&7&l« &c&lSH &8&l» &7Tu n''as pas encore d''&cîle&7.'
+
+players-only: '&7&l« &c&lSH &8&l» &7Commande réservée aux &cjoueurs&7.'
+no-permission: '&7&l« &c&lSH &8&l» &7Tu n''as pas la &cpermission &7d''utiliser cette commande.'
+admin-usage: '&7&l« &e&lSH &8&l» &7Utilisation : &e/shislandholo reload'
+reloaded: '&7&l« &a&lSH &8&l» &7Configuration rechargée : &a{tips} conseils&7.'

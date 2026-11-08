@@ -1,291 +1,150 @@
 package org.Cry_Legende.sHIslandHolo;
 
-import com.bgsoftware.superiorskyblock.api.events.*;
-import com.bgsoftware.superiorskyblock.api.island.Island;
-import com.bgsoftware.superiorskyblock.api.world.Dimension;
-import com.bgsoftware.superiorskyblock.api.wrappers.SuperiorPlayer;
 import com.bgsoftware.superiorskyblock.api.SuperiorSkyblockAPI;
-import eu.decentsoftware.holograms.api.DHAPI;
-import eu.decentsoftware.holograms.api.holograms.Hologram;
-
-import eu.decentsoftware.holograms.api.holograms.HologramLine;
-import eu.decentsoftware.holograms.api.holograms.HologramPage;
-import eu.decentsoftware.holograms.event.HologramClickEvent;
+import com.bgsoftware.superiorskyblock.api.wrappers.SuperiorPlayer;
 import org.bukkit.Bukkit;
-import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.PluginCommand;
+import org.bukkit.command.TabCompleter;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.Location;
+import org.bukkit.scheduler.BukkitTask;
 
-import java.util.ArrayList;
+import java.io.File;
 import java.util.List;
+import java.util.Locale;
 
-public class SHIslandHolo extends JavaPlugin implements Listener {
+public class SHIslandHolo extends JavaPlugin implements TabCompleter {
 
-    private FileConfiguration config;
-    // Paliers lus une fois au chargement, dans l'ordre du fichier
-    private List<HologramTier> hologramTiers;
+    private Settings settings;
+    private Messages messages;
+    private ClickBoxes boxes;
+    private HoloService holos;
+    private BukkitTask refreshTask;
+    private boolean placeholderApi;
 
     @Override
     public void onEnable() {
-        this.saveDefaultConfig();
-        config = this.getConfig();
-        getServer().getPluginManager().registerEvents(this, this);
-        loadHologramConfigs();
-        getLogger().info("Plugin SHIslandHolo activé.");
+        saveDefaultConfig();
+        saveResourceIfAbsent("tips.yml");
+        saveResourceIfAbsent("messages.yml");
+        placeholderApi = Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI");
+
+        boxes = new ClickBoxes();
+        holos = new HoloService(this, boxes);
+        loadFiles();
+        boxes.listen((owner, left) -> Bukkit.getScheduler().runTask(this, () -> holos.click(owner, left)));
+        getServer().getPluginManager().registerEvents(new IslandListener(this, holos), this);
+        for (String name : List.of("conseil", "shislandholo")) {
+            PluginCommand command = getCommand(name);
+            if (command != null) {
+                command.setExecutor(this);
+                command.setTabCompleter(this);
+            }
+        }
+        startRefreshTask();
+        getLogger().info(settings.tips().size() + " conseil(s) chargé(s)"
+                + (placeholderApi ? "." : ", PlaceholderAPI absent : les conditions à placeholders sont fausses."));
     }
 
     @Override
     public void onDisable() {
-        getLogger().info("Plugin SHIslandHolo désactivé.");
+        if (refreshTask != null) {
+            refreshTask.cancel();
+        }
+        if (holos != null) {
+            holos.removeAll();
+        }
+        if (boxes != null) {
+            boxes.close();
+        }
     }
 
-    private void loadHologramConfigs() {
-        getLogger().info("Chargement des configurations des hologrammes en cours...");
-        hologramTiers = new ArrayList<>();
-        ConfigurationSection section = config.getConfigurationSection("holograms");
-        if (section == null) {
-            getLogger().warning("Section 'holograms' absente de config.yml : aucun hologramme.");
-            return;
+    Settings settings() {
+        return settings;
+    }
+
+    Messages messages() {
+        return messages;
+    }
+
+    boolean hasPlaceholderApi() {
+        return placeholderApi;
+    }
+
+    private void loadFiles() {
+        reloadConfig();
+        YamlConfiguration tips = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "tips.yml"));
+        settings = Settings.load(getConfig(), tips.getConfigurationSection("tips"), getLogger());
+        messages = new Messages(new File(getDataFolder(), "messages.yml"));
+    }
+
+    private void startRefreshTask() {
+        if (refreshTask != null) {
+            refreshTask.cancel();
         }
-        for (String key : section.getKeys(false)) {
-            String path = "holograms." + key;
-            try {
-                List<String> lines = config.getStringList(path + ".lines");
-                String[] positionSplit = config.getString(path + ".position", "").split(",");
-                Location offset = new Location(null,
-                    Double.parseDouble(positionSplit[0].trim()),
-                    Double.parseDouble(positionSplit[1].trim()),
-                    Double.parseDouble(positionSplit[2].trim()));
-                hologramTiers.add(parseTier(key, new HologramConfig(lines, offset)));
-            } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
-                getLogger().warning("Hologramme '" + key + "' ignoré : palier ou position invalide.");
+        refreshTask = Bukkit.getScheduler().runTaskTimer(this, holos::refreshAll, 40L, settings.refreshTicks());
+    }
+
+    private void saveResourceIfAbsent(String name) {
+        if (!new File(getDataFolder(), name).exists()) {
+            saveResource(name, false);
+        }
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (command.getName().equalsIgnoreCase("shislandholo")) {
+            return adminCommand(sender, args);
+        }
+        if (!(sender instanceof Player player)) {
+            messages.send(sender, "players-only");
+            return true;
+        }
+        if (!player.hasPermission("shislandholo.conseil")) {
+            messages.send(player, "no-permission");
+            return true;
+        }
+        if (args.length > 0 && args[0].equalsIgnoreCase("cacher")) {
+            if (!holos.hide(player)) {
+                messages.send(player, "nothing-shown");
             }
+            return true;
         }
-        getLogger().info("Configurations des hologrammes chargées.");
+        SuperiorPlayer superiorPlayer = SuperiorSkyblockAPI.getPlayer(player);
+        if (superiorPlayer == null || superiorPlayer.getIsland() == null) {
+            messages.send(player, "no-island");
+            return true;
+        }
+        messages.send(player, holos.restore(player) ? "tips-restored" : "nothing-hidden");
+        return true;
     }
 
-    /**
-     * Clé de palier : "min-max", "<n", ">n" ou "n".
-     */
-    private static HologramTier parseTier(String key, HologramConfig hologramConfig) {
-        if (key.contains("-")) {
-            String[] parts = key.split("-");
-            return new HologramTier(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), hologramConfig);
-        } else if (key.startsWith("<")) {
-            return new HologramTier(Integer.MIN_VALUE, Integer.parseInt(key.substring(1)) - 1, hologramConfig);
-        } else if (key.startsWith(">")) {
-            return new HologramTier(Integer.parseInt(key.substring(1)) + 1, Integer.MAX_VALUE, hologramConfig);
+    private boolean adminCommand(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("shislandholo.admin")) {
+            messages.send(sender, "no-permission");
+            return true;
         }
-        int configLevel = Integer.parseInt(key);
-        return new HologramTier(configLevel, configLevel, hologramConfig);
+        if (args.length == 0 || !args[0].equalsIgnoreCase("reload")) {
+            messages.send(sender, "admin-usage");
+            return true;
+        }
+        holos.removeAll();
+        loadFiles();
+        startRefreshTask();
+        holos.refreshAll();
+        messages.send(sender, "reloaded", "tips", String.valueOf(settings.tips().size()));
+        return true;
     }
 
-    private HologramConfig getHologramConfigForLevel(int level) {
-        for (HologramTier tier : hologramTiers) {
-            if (level >= tier.min() && level <= tier.max()) {
-                return tier.config();
-            }
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (args.length != 1) {
+            return List.of();
         }
-        return null;
+        String option = command.getName().equalsIgnoreCase("shislandholo") ? "reload" : "cacher";
+        return option.startsWith(args[0].toLowerCase(Locale.ROOT)) ? List.of(option) : List.of();
     }
-
-    /**
-     * SSB2 2026.3 attend une Dimension (et non plus un World.Environment) pour trouver le centre d'une île.
-     */
-    private static Dimension normalDimension() {
-        for (Dimension dimension : Dimension.values()) {
-            if (dimension.getEnvironment() == org.bukkit.World.Environment.NORMAL) {
-                return dimension;
-            }
-        }
-        return Dimension.getByName("NORMAL");
-    }
-
-    private void updateIslandHologram(Island island, int islandLevel, int islandOldLevel) {
-        if (islandLevel <= islandOldLevel) {
-            return;
-        }
-
-        String hologramName = "island_" + island.getUniqueId() + "_holo";
-        Hologram hologram = DHAPI.getHologram(hologramName);
-
-        HologramConfig hologramConfig = getHologramConfigForLevel(islandLevel);
-        HologramConfig hologramOldConfig = getHologramConfigForLevel(islandOldLevel);
-
-        if (hologramConfig == null) {
-            if (hologram != null) {
-                List<SuperiorPlayer> members = island.getIslandMembers(true);
-                for (SuperiorPlayer member : members) {
-                    Player player = member.asPlayer();
-                    if (player != null && player.isOnline()) {
-                        hologram.removeShowPlayer(player);
-                    }
-                }
-            }
-            return;
-        }
-
-        if (hologramConfig == hologramOldConfig) {
-            return;
-        }
-
-        Location center = island.getCenter(normalDimension());
-        if (center == null || center.getWorld() == null) {
-            return;
-        }
-        Location holoLocation = new Location(center.getWorld(),
-            center.getX() + hologramConfig.offset.getX(),
-            center.getY() + hologramConfig.offset.getY(),
-            center.getZ() + hologramConfig.offset.getZ());
-
-        if (hologram == null) {
-            hologram = DHAPI.createHologram(hologramName, holoLocation);
-            hologram.setDefaultVisibleState(false);
-            hologram.hideAll();
-        } else {
-            DHAPI.moveHologram(hologram, holoLocation);
-        }
-
-        List<String> processedLines = new ArrayList<>(hologramConfig.lines);
-        DHAPI.setHologramLines(hologram, processedLines);
-
-        List<SuperiorPlayer> members = island.getIslandMembers(true);
-        for (SuperiorPlayer member : members) {
-            Player player = member.asPlayer();
-            if (player != null && player.isOnline()) {
-                hologram.setShowPlayer(player);
-            }
-        }
-    }
-
-
-    /**
-     * SSB2 déclenche IslandWorthUpdateEvent en asynchrone : l'hologramme est toujours géré sur le thread principal.
-     */
-    private void runSync(Runnable task) {
-        if (Bukkit.isPrimaryThread()) {
-            task.run();
-        } else if (isEnabled()) {
-            Bukkit.getScheduler().runTask(this, task);
-        }
-    }
-
-    @EventHandler
-    public void onIslandLevelChange(IslandWorthUpdateEvent event) {
-        Island island = event.getIsland();
-        int islandLevel = event.getNewLevel().intValue();
-        int islandOldLevel = event.getOldLevel().intValue();
-        if (islandLevel <= islandOldLevel) {
-            return;
-        }
-
-        runSync(() -> updateIslandHologram(island, islandLevel, islandOldLevel));
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onIslandcreate(IslandCreateEvent event) {
-        Island island = event.getIsland();
-        int islandLevel = 0;
-        int islandOldLevel = -1;
-
-        runSync(() -> updateIslandHologram(island, islandLevel, islandOldLevel));
-    }
-
-
-    @EventHandler
-    public void onHologramClick(HologramClickEvent event) {
-        Player player = event.getPlayer();
-        Hologram hologram = event.getHologram();
-        String hologramName = hologram.getName();
-
-        SuperiorPlayer sPlayer = SuperiorSkyblockAPI.getPlayer(player);
-        if (sPlayer != null && sPlayer.getIsland() != null) {
-            String islandHologramName = "island_" + sPlayer.getIsland().getUniqueId() + "_holo";
-            if (hologramName.equals(islandHologramName)) {
-                hologram.removeShowPlayer(player);
-            }
-        }
-    }
-
-
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onDisbandIsland(IslandDisbandEvent event) {
-        Island island = event.getIsland();
-
-        String hologramName = "island_" + island.getUniqueId() + "_holo";
-        Hologram hologram = DHAPI.getHologram(hologramName);
-
-        if (hologram != null) {
-            DHAPI.removeHologram(hologramName);
-        }
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onIslandJoin(IslandJoinEvent event) {
-        Island island = event.getIsland();
-        SuperiorPlayer asPlayer = event.getPlayer();
-
-        String hologramName = "island_" + island.getUniqueId() + "_holo";
-        Hologram hologram = DHAPI.getHologram(hologramName);
-
-        if (hologram != null) {
-            Player player = asPlayer.asPlayer();
-            if (player != null && player.isOnline()) {
-                hologram.setShowPlayer(player);
-            }
-        }
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onIslandQuit(IslandQuitEvent event) {
-        Island island = event.getIsland();
-        SuperiorPlayer asPlayer = event.getPlayer();
-
-        String hologramName = "island_" + island.getUniqueId() + "_holo";
-        Hologram hologram = DHAPI.getHologram(hologramName);
-
-        if (hologram != null) {
-            Player player = asPlayer.asPlayer();
-            if (player != null && player.isOnline()) {
-                hologram.removeShowPlayer(player);
-            }
-        }
-    }
-
-    //  @EventHandler
-    //public void onJoin(PlayerJoinEvent event) {
-    //SuperiorPlayer sPlayer = SuperiorSkyblockAPI.getPlayer(event.getPlayer());
-    //if (sPlayer != null) {
-    //    Island island = sPlayer.getIsland();
-    //    if (island != null) {
-    //          String hologramName = "island_" + island.getUniqueId() + "_holo";
-    //      Hologram hologram = DHAPI.getHologram(hologramName);
-    //      Player player = sPlayer.asPlayer();
-    //      if (hologram != null && sPlayer.isOnline()) {
-    //          hologram.setShowPlayer(player);
-    //      }
-    //    }
-    //  }
-    //}
-
-
-}
-
-class HologramConfig {
-    List<String> lines;
-    Location offset;
-
-    HologramConfig(List<String> lines, Location offset) {
-        this.lines = lines;
-        this.offset = offset;
-    }
-
-}
-
-record HologramTier(int min, int max, HologramConfig config) {
 }

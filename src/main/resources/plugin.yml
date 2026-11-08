@@ -3,4 +3,23 @@ version: '${project.version}'
 main: org.Cry_Legende.sHIslandHolo.SHIslandHolo
 api-version: '1.20'
 author: Cry_Legende
-depend: [SuperiorSkyblock2, DecentHolograms]
+description: Conseils en hologramme sur l'île du joueur, choisis selon sa progression et cachés d'un clic.
+depend: [SuperiorSkyblock2, FancyHolograms, packetevents]
+softdepend: [PlaceholderAPI]
+
+commands:
+  conseil:
+    description: Réafficher les conseils cachés, ou cacher celui qui est affiché.
+    usage: /<command> [cacher]
+    aliases: [conseils]
+  shislandholo:
+    description: Administration de SHIslandHolo.
+    usage: /<command> reload
+
+permissions:
+  shislandholo.conseil:
+    description: Utiliser /conseil.
+    default: true
+  shislandholo.admin:
+    description: Recharger la configuration, les conseils et les messages.
+    default: op
