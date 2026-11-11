@@ -110,6 +110,19 @@ tips:
       - ''
       - '&8Clic : cacher ce conseil'
 
+  # Page publique du joueur et de son île sur le site (skyhandprofils).
+  page:
+    levels: 300+
+    click: profil
+    lines:
+      - '<b><gradient:#F48854:#FDFA8C>Ta page sur le site</gradient></b>'
+      - ''
+      - '&7Ton île et tes stats ont leur page :'
+      - '&7partage-la à tes amis.'
+      - ''
+      - '&eClic droit &7: obtenir le lien'
+      - '&8Clic gauche : cacher ce conseil'
+
   classement:
     levels: 400+
     click: is top

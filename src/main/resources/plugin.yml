@@ -21,5 +21,10 @@ permissions:
     description: Utiliser /conseil.
     default: true
   shislandholo.admin:
-    description: Recharger la configuration, les conseils et les messages.
+    description: Toutes les commandes d'administration de SHIslandHolo.
     default: op
+    children:
+      shislandholo.admin.reload: true
+  shislandholo.admin.reload:
+    description: Recharger la configuration, les conseils et les messages.
+    default: false

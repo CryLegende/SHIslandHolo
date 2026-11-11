@@ -35,9 +35,17 @@ Utilisé sur : **Opale**.
 
 | Commande | Permission | Effet |
 |---|---|---|
-| `/conseil` | `shislandholo.conseil` (tous) | Réaffiche tous les conseils cachés |
+| `/conseil` (alias `/conseils`) | `shislandholo.conseil` (tous) | Réaffiche tous les conseils cachés |
 | `/conseil cacher` | `shislandholo.conseil` (tous) | Cache le conseil affiché (joueurs Bedrock, sans clic) |
-| `/shislandholo reload` | `shislandholo.admin` (op) | Recharge les trois fichiers |
+| `/shislandholo reload` | `shislandholo.admin.reload` (op) | Recharge les trois fichiers ; un fichier invalide annule le rechargement et garde l'ancienne configuration |
+
+## Permissions
+
+| Permission | Description | Par défaut |
+|---|---|---|
+| `shislandholo.conseil` | Utiliser `/conseil` | `true` |
+| `shislandholo.admin` | Toutes les commandes d'administration (parent de la suivante) | `op` |
+| `shislandholo.admin.reload` | Recharger la configuration, les conseils et les messages | `false` |
 
 ## Configuration
 

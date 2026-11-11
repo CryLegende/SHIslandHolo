@@ -11,13 +11,16 @@
 #  s'il n'en a pas. Les conseils cachés sont retenus par joueur.
 #
 #  Commandes :
-#    /conseil             Réaffiche tous les conseils cachés.
-#    /conseil cacher      Cache le conseil affiché (joueurs Bedrock, sans clic).
-#    /shislandholo reload Recharge config.yml, tips.yml et messages.yml.
+#    /conseil (alias /conseils)  Réaffiche tous les conseils cachés.
+#    /conseil cacher             Cache le conseil affiché (joueurs Bedrock, sans clic).
+#    /shislandholo reload        Recharge config.yml, tips.yml et messages.yml.
+#                                Un fichier invalide annule le rechargement : l'ancienne
+#                                configuration et les hologrammes restent en place.
 #
 #  Permissions :
-#    shislandholo.conseil  /conseil (tout le monde par défaut)
-#    shislandholo.admin    /shislandholo reload (op par défaut)
+#    shislandholo.conseil        /conseil (tout le monde par défaut)
+#    shislandholo.admin          Toutes les commandes d'administration (op par défaut)
+#    shislandholo.admin.reload   /shislandholo reload
 #
 #  Fichiers :
 #    config.yml    réglages (ce fichier)
