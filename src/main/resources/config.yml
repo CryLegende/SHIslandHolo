@@ -10,9 +10,9 @@
 #  Clic droit : lance la commande du conseil (clé « click »), ou le cache
 #  s'il n'en a pas. Les conseils cachés sont retenus par joueur.
 #
-#  Quand des blocs occupent la place de l'hologramme (île construite,
-#  point d'apparition déplacé), il prend la place libre la plus proche
-#  (section « placement »).
+#  L'hologramme se place devant le point d'apparition de l'île (/is sethome),
+#  à portée de clic du joueur qui y arrive. Quand des blocs occupent sa place,
+#  il prend la place libre la plus proche (section « placement »).
 #
 #  Commandes :
 #    /conseil (alias /conseils)  Réaffiche tous les conseils cachés.
@@ -37,8 +37,22 @@
 refresh-seconds: 3
 
 hologram:
-  # Position par défaut par rapport au centre de l'île (x, y, z).
-  # Un conseil peut avoir sa propre position (clé « position » dans tips.yml).
+  # Place de l'hologramme :
+  #   home    devant le point d'apparition de l'île (/is sethome), dans la
+  #           direction de son regard : cliquable sans bouger en arrivant.
+  #   center  centre de l'île + « position ».
+  # Un conseil qui a sa propre position (clé « position » dans tips.yml) la
+  # garde, quel que soit ce réglage.
+  anchor: home
+  # anchor home : distance horizontale, en blocs, entre le joueur et le milieu
+  # de l'hologramme. Avec une zone cliquable de 3 de large, 3.5 met son bord à
+  # 2 blocs du joueur (portée d'un clic en survie : 3 blocs).
+  distance: 3.5
+  # anchor home : hauteur, en blocs, du bas de l'hologramme au-dessus des
+  # pieds du joueur. 0.1 garde les yeux (1.62) dans la zone cliquable dès
+  # 6 lignes, et un conseil de 11 lignes sous 3 blocs de haut.
+  height: 0.1
+  # anchor center : position par rapport au centre de l'île (x, y, z).
   position: '0,4,8'
   # Distance, en blocs, à partir de laquelle le joueur voit l'hologramme.
   view-distance: 32
@@ -53,21 +67,19 @@ hologram:
 
 placement:
   # Hologramme enfoui : à sa création, si des blocs touchent son volume, il
-  # prend la place libre la plus proche. Ordre de recherche : au-dessus de sa
-  # position, puis devant le point d'apparition de l'île (/is sethome), puis
-  # devant le joueur. Rien n'est vérifié tant que l'hologramme reste affiché.
-  # Sans place libre, il garde sa position.
+  # prend la place libre la plus proche. Autour du point d'apparition (à la
+  # distance et à la hauteur ci-dessus) : d'abord les places encore à portée
+  # de clic, devant puis de plus en plus sur le côté ou plus haut, puis les
+  # plus hautes ; ensuite la même recherche autour du joueur. Une position
+  # fixe (anchor center, clé « position ») monte d'abord au-dessus des blocs.
+  # Rien n'est vérifié tant que l'hologramme reste affiché. Sans place
+  # libre, il garde sa position.
   enabled: true
   # Largeur, en blocs, qui doit être libre autour de l'hologramme.
   # La hauteur suit le nombre de lignes du conseil.
   width: 3.0
   # Montée maximale, en blocs, au-dessus de chaque position essayée.
   max-rise: 6
-  # Distance, en blocs, entre le point d'apparition (ou le joueur) et l'hologramme.
-  distance: 4.0
-  # Hauteur, en blocs, du bas de l'hologramme au-dessus des pieds, devant le
-  # point d'apparition ou le joueur.
-  height: 0.5
 
 click-box:
   # Zone cliquable posée sur l'hologramme (invisible, envoyée au joueur seul).

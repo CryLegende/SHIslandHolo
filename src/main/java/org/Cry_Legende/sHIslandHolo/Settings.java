@@ -14,10 +14,11 @@ import java.util.logging.Logger;
 /**
  * Réglages de config.yml et conseils de tips.yml, relus à chaque /shislandholo reload.
  *
+ * @param homeAnchor vrai : hologramme devant le point d'apparition de l'île ; faux : centre de l'île + position
  * @param background null pour le fond par défaut de Minecraft
  * @param sound      clé du son (« block.note_block.pling »), ou null
  */
-record Settings(int refreshTicks, Vector position, int viewDistance, Display.Billboard billboard, Color background,
+record Settings(int refreshTicks, boolean homeAnchor, Vector position, int viewDistance, Display.Billboard billboard, Color background,
                 boolean textShadow, float scale, int placeholderRefreshMs, Placement.Rules placement,
                 boolean clickBox, float clickWidth, float lineHeight, long clickCooldownMs, boolean announce,
                 String sound, float soundVolume, float soundPitch, List<Tip> tips) {
@@ -35,9 +36,15 @@ record Settings(int refreshTicks, Vector position, int viewDistance, Display.Bil
             logger.warning("hologram.billboard invalide, CENTER utilisé.");
             billboard = Display.Billboard.CENTER;
         }
+        String anchor = config.getString("hologram.anchor", "home").trim().toLowerCase(Locale.ROOT);
+        if (!anchor.equals("home") && !anchor.equals("center")) {
+            logger.warning("hologram.anchor invalide (« " + anchor + " »), home utilisé.");
+            anchor = "home";
+        }
         String sound = config.getString("new-tip.sound", "");
         return new Settings(
                 Math.max(1, config.getInt("refresh-seconds", 3)) * 20,
+                anchor.equals("home"),
                 position,
                 Math.max(1, config.getInt("hologram.view-distance", 32)),
                 billboard,
@@ -49,8 +56,8 @@ record Settings(int refreshTicks, Vector position, int viewDistance, Display.Bil
                         config.getBoolean("placement.enabled", true),
                         clamp(config.getDouble("placement.width", 3.0), 0, 16),
                         (int) clamp(config.getInt("placement.max-rise", 6), 0, 32),
-                        clamp(config.getDouble("placement.distance", 4.0), 0, 16),
-                        clamp(config.getDouble("placement.height", 0.5), -4, 8)),
+                        clamp(config.getDouble("hologram.distance", 3.5), 0, 16),
+                        clamp(config.getDouble("hologram.height", 0.1), -4, 8)),
                 config.getBoolean("click-box.enabled", true),
                 (float) config.getDouble("click-box.width", 3.0),
                 (float) config.getDouble("click-box.line-height", 0.25),

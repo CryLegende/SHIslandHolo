@@ -4,40 +4,57 @@ import org.bukkit.Location;
 import org.bukkit.World;
 
 /**
- * Place d'un hologramme que des blocs occupent (île construite à sa position, point d'apparition déplacé) :
- * la place libre la plus proche, cherchée une seule fois, à la création de l'hologramme.
- * Ordre : au-dessus de la position prévue, puis devant le point d'apparition de l'île, puis devant le joueur.
+ * Position d'un hologramme, calculée une seule fois, à sa création.
+ * Par défaut devant le point d'apparition de l'île, à portée de clic d'un joueur qui y arrive ; si des blocs
+ * occupent cette place, la place libre la plus proche autour du point d'apparition, puis autour du joueur.
+ * Une position fixe (centre de l'île + décalage) monte d'abord au-dessus des blocs.
  * Aucun chunk n'est chargé : un bloc d'un chunk absent compte comme libre.
  */
 final class Placement {
 
-    /** Réglages de config.yml (section « placement »). */
+    /**
+     * Réglages de config.yml.
+     *
+     * @param distance distance horizontale entre le joueur et le milieu de l'hologramme
+     * @param height   hauteur du bas de l'hologramme au-dessus des pieds du joueur
+     */
     record Rules(boolean enabled, double width, int maxRise, double distance, double height) {
     }
 
+    // Portée de clic sur une entité d'un joueur en survie, hauteur de ses yeux
+    private static final double REACH = 3.0;
+    private static final double EYES = 1.62;
     private static final double EPSILON = 1.0E-3;
-    // Directions essayées autour d'un point d'apparition, en huitièmes de tour à partir de son regard
+    // Directions autour d'un point, en huitièmes de tour à partir de son regard : devant d'abord, derrière en dernier
     private static final int[] DIRECTIONS = {0, 1, -1, 2, -2, 3, -3, 4};
 
     private Placement() {
     }
 
+    /** Devant le point donné (pieds du joueur), dans la direction de son regard. */
+    static Location front(Location anchor, Rules rules) {
+        return spot(anchor, 0, 0, rules);
+    }
+
     /**
-     * @param wanted position prévue (centre de l'île + position du conseil)
+     * @param wanted position prévue : devant le point d'apparition, ou position fixe
+     * @param fixed  vrai pour une position fixe (centre de l'île + décalage)
      * @param home   point d'apparition de l'île, ou null
      * @param player position du joueur, ou null
      * @param height hauteur de l'hologramme, en blocs
      * @return la position prévue si elle est libre ou si aucune place libre n'est trouvée
      */
-    static Location find(Location wanted, Location home, Location player, double height, Rules rules) {
+    static Location find(Location wanted, boolean fixed, Location home, Location player, double height, Rules rules) {
         World world = wanted.getWorld();
         if (!rules.enabled() || world == null) {
             return wanted;
         }
         double half = rules.width() / 2;
-        for (int rise = 0; rise <= rules.maxRise(); rise++) {
-            if (free(world, wanted.getX(), wanted.getY() + rise, wanted.getZ(), half, height)) {
-                return rise == 0 ? wanted : wanted.clone().add(0, rise, 0);
+        if (fixed) {
+            for (int rise = 0; rise <= rules.maxRise(); rise++) {
+                if (free(world, wanted.getX(), wanted.getY() + rise, wanted.getZ(), half, height)) {
+                    return rise == 0 ? wanted : wanted.clone().add(0, rise, 0);
+                }
             }
         }
         for (Location anchor : new Location[]{home, player}) {
@@ -52,21 +69,43 @@ final class Placement {
         return wanted;
     }
 
-    /** Devant le point donné ; à chaque hauteur, toutes les directions sont essayées avant de monter d'un bloc. */
+    /**
+     * Place libre autour du point donné, à la distance prévue. D'abord les places encore à portée de clic,
+     * de la plus proche de « devant, à hauteur prévue » à la plus éloignée (un huitième de tour vaut un bloc
+     * de montée), puis les plus hautes.
+     */
     private static Location around(World world, Location anchor, double half, double height, Rules rules) {
-        double facing = Math.toRadians(anchor.getYaw());
-        for (int rise = 0; rise <= rules.maxRise(); rise++) {
-            double y = anchor.getY() + rules.height() + rise;
+        // Montée au-delà de laquelle le bas de la zone cliquable sort de la portée d'un joueur resté sur place
+        double nearFace = Math.max(0, rules.distance() - half);
+        double reachUp = Math.sqrt(Math.max(0, REACH * REACH - nearFace * nearFace));
+        int close = (int) Math.min(rules.maxRise(), Math.max(0, Math.floor(EYES + reachUp - rules.height())));
+        for (int cost = 0; cost <= close + 4; cost++) {
             for (int direction : DIRECTIONS) {
-                double yaw = facing + direction * Math.PI / 4;
-                double x = anchor.getX() - Math.sin(yaw) * rules.distance();
-                double z = anchor.getZ() + Math.cos(yaw) * rules.distance();
-                if (free(world, x, y, z, half, height)) {
-                    return new Location(world, x, y, z);
+                int rise = cost - Math.abs(direction);
+                if (rise < 0 || rise > close) {
+                    continue;
+                }
+                Location spot = spot(anchor, direction, rise, rules);
+                if (free(world, spot.getX(), spot.getY(), spot.getZ(), half, height)) {
+                    return spot;
+                }
+            }
+        }
+        for (int direction : DIRECTIONS) {
+            for (int rise = close + 1; rise <= rules.maxRise(); rise++) {
+                Location spot = spot(anchor, direction, rise, rules);
+                if (free(world, spot.getX(), spot.getY(), spot.getZ(), half, height)) {
+                    return spot;
                 }
             }
         }
         return null;
+    }
+
+    private static Location spot(Location anchor, int direction, int rise, Rules rules) {
+        double yaw = Math.toRadians(anchor.getYaw()) + direction * Math.PI / 4;
+        return new Location(anchor.getWorld(), anchor.getX() - Math.sin(yaw) * rules.distance(),
+                anchor.getY() + rules.height() + rise, anchor.getZ() + Math.cos(yaw) * rules.distance());
     }
 
     /** Vrai si aucun bloc qu'on ne traverse pas ne touche le volume (largeur × largeur × hauteur, base en y). */

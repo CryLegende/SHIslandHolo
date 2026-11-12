@@ -21,8 +21,9 @@
 #    click       Commande lancée par le joueur au clic droit, sans « / ».
 #                Sans cette clé, le clic droit cache le conseil comme le
 #                clic gauche.
-#    position    Position par rapport au centre de l'île, « x,y,z ».
-#                Par défaut : hologram.position de config.yml.
+#    position    Position fixe par rapport au centre de l'île, « x,y,z ».
+#                Par défaut : hologram.anchor de config.yml (devant le
+#                point d'apparition de l'île).
 #
 #  Le nom d'un conseil (bienvenue, defi...) sert à retenir ceux que le joueur
 #  a cachés ou déjà vus : le renommer le fait réapparaître chez tout le monde.

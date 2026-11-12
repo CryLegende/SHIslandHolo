@@ -21,7 +21,8 @@ Quand un joueur se trouve sur sa propre île, un hologramme FancyHolograms visib
 - Les conseils cachés et déjà vus sont retenus par joueur (données du joueur, rien en base).
 - Un conseil jamais vu est annoncé dans le chat, sauf le tout premier.
 - Les hologrammes ne sont pas sauvegardés par FancyHolograms : ils sont recréés à chaque passage sur l'île et retirés quand le joueur la quitte.
-- Hologramme enfoui (île construite à sa place, point d'apparition déplacé) : à sa création, il prend la place libre la plus proche, d'abord au-dessus, puis devant le point d'apparition de l'île, puis devant le joueur. La recherche ne se fait qu'à la création, jamais en continu, et ne charge aucun chunk.
+- L'hologramme se place devant le point d'apparition de l'île (`/is sethome`), dans la direction de son regard, à 3,5 blocs : un joueur en survie qui arrive sur l'île le clique sans bouger. `hologram.anchor: center` remet l'ancienne position (centre de l'île + décalage), et un conseil peut garder sa propre position (`position` dans `tips.yml`).
+- Hologramme enfoui (île construite à sa place) : à sa création, il prend la place libre la plus proche, d'abord celles encore à portée de clic, puis plus haut, puis autour du joueur. La recherche ne se fait qu'à la création, jamais en continu, et ne charge aucun chunk.
 
 La zone cliquable est une entité « interaction » envoyée en paquets au seul joueur concerné : elle n'existe pas côté serveur.
 

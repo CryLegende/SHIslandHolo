@@ -37,7 +37,8 @@ final class HoloService {
     /**
      * Conseil affiché à un joueur.
      *
-     * @param wanted position prévue (centre de l'île + position du conseil) ; l'hologramme a pu être déplacé
+     * @param wanted position prévue (devant le point d'apparition, ou centre de l'île + décalage) ;
+     *               l'hologramme a pu être déplacé
      */
     private record Shown(String hologram, Tip tip, Location wanted) {
     }
@@ -81,13 +82,25 @@ final class HoloService {
         Settings settings = plugin.settings();
         Tip tip = null;
         Location wanted = null;
+        Location home = null;
+        boolean fixed = true;
         Island island = ownIslandUnder(player);
         if (island != null) {
             Location center = island.getCenter(normal);
             if (center != null && center.getWorld() != null && center.getWorld().equals(player.getWorld())) {
                 tip = currentTip(player, island, settings);
                 if (tip != null) {
-                    wanted = center.clone().add(tip.position() != null ? tip.position() : settings.position());
+                    home = island.getIslandHome(normal);
+                    if (home != null && !center.getWorld().equals(home.getWorld())) {
+                        home = null;
+                    }
+                    if (tip.position() == null && settings.homeAnchor() && home != null) {
+                        // Devant le point d'apparition : cliquable sans bouger par un joueur qui arrive sur l'île
+                        wanted = Placement.front(home, settings.placement());
+                        fixed = false;
+                    } else {
+                        wanted = center.clone().add(tip.position() != null ? tip.position() : settings.position());
+                    }
                 }
             }
         }
@@ -107,8 +120,7 @@ final class HoloService {
             remove(player);
         }
         float height = height(tip, settings);
-        Location placed = Placement.find(wanted, island.getIslandHome(normal), player.getLocation(), height,
-                settings.placement());
+        Location placed = Placement.find(wanted, fixed, home, player.getLocation(), height, settings.placement());
         show(player, tip, wanted, placed, height, settings);
         markSeen(player, tip, settings);
     }
