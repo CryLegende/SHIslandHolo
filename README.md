@@ -21,6 +21,7 @@ Quand un joueur se trouve sur sa propre île, un hologramme FancyHolograms visib
 - Les conseils cachés et déjà vus sont retenus par joueur (données du joueur, rien en base).
 - Un conseil jamais vu est annoncé dans le chat, sauf le tout premier.
 - Les hologrammes ne sont pas sauvegardés par FancyHolograms : ils sont recréés à chaque passage sur l'île et retirés quand le joueur la quitte.
+- Hologramme enfoui (île construite à sa place, point d'apparition déplacé) : à sa création, il prend la place libre la plus proche, d'abord au-dessus, puis devant le point d'apparition de l'île, puis devant le joueur. La recherche ne se fait qu'à la création, jamais en continu, et ne charge aucun chunk.
 
 La zone cliquable est une entité « interaction » envoyée en paquets au seul joueur concerné : elle n'existe pas côté serveur.
 
@@ -53,7 +54,7 @@ Cliquez sur un fichier pour l'ouvrir :
 
 <pre>
 plugins/SHIslandHolo/
-├── <a href="src/main/resources/config.yml">config.yml</a>     réglages : position, apparence, zone cliquable, annonce
+├── <a href="src/main/resources/config.yml">config.yml</a>     réglages : position, place libre, apparence, zone cliquable, annonce
 ├── <a href="src/main/resources/tips.yml">tips.yml</a>       les conseils, leurs conditions et leurs commandes
 └── <a href="src/main/resources/messages.yml">messages.yml</a>   messages du chat
 </pre>

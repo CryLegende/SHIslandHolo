@@ -34,8 +34,12 @@ final class HoloService {
 
     private static final String PREFIX = "shislandholo_";
 
-    /** Conseil affiché à un joueur. */
-    private record Shown(String hologram, Tip tip, Location location) {
+    /**
+     * Conseil affiché à un joueur.
+     *
+     * @param wanted position prévue (centre de l'île + position du conseil) ; l'hologramme a pu être déplacé
+     */
+    private record Shown(String hologram, Tip tip, Location wanted) {
     }
 
     private final SHIslandHolo plugin;
@@ -46,6 +50,9 @@ final class HoloService {
     private final Dimension normal;
     private final Map<UUID, Shown> shown = new HashMap<>();
     private final Map<UUID, Long> lastClick = new HashMap<>();
+    // Chaque hologramme a son propre nom : FancyHolograms cache l'ancien en différé (HologramHideEvent sur son
+    // thread), et sous un nom partagé cet événement retirait la zone cliquable du conseil suivant.
+    private long sequence;
 
     HoloService(SHIslandHolo plugin, ClickBoxes boxes) {
         this.plugin = plugin;
@@ -73,14 +80,14 @@ final class HoloService {
         }
         Settings settings = plugin.settings();
         Tip tip = null;
-        Location location = null;
+        Location wanted = null;
         Island island = ownIslandUnder(player);
         if (island != null) {
             Location center = island.getCenter(normal);
             if (center != null && center.getWorld() != null && center.getWorld().equals(player.getWorld())) {
                 tip = currentTip(player, island, settings);
                 if (tip != null) {
-                    location = center.clone().add(tip.position() != null ? tip.position() : settings.position());
+                    wanted = center.clone().add(tip.position() != null ? tip.position() : settings.position());
                 }
             }
         }
@@ -91,15 +98,24 @@ final class HoloService {
             }
             return;
         }
-        if (current != null && current.tip() == tip && current.location().equals(location)
+        // La place libre n'est cherchée qu'à la création : un hologramme déplacé reste où il est
+        if (current != null && current.tip() == tip && current.wanted().equals(wanted)
                 && manager.getHologram(current.hologram()).isPresent()) {
             return;
         }
         if (current != null) {
             remove(player);
         }
-        show(player, tip, location, settings);
+        float height = height(tip, settings);
+        Location placed = Placement.find(wanted, island.getIslandHome(normal), player.getLocation(), height,
+                settings.placement());
+        show(player, tip, wanted, placed, height, settings);
         markSeen(player, tip, settings);
+    }
+
+    /** Hauteur de l'hologramme d'un conseil, en blocs. */
+    private static float height(Tip tip, Settings settings) {
+        return tip.lines().size() * settings.lineHeight() * settings.scale() + 0.1f;
     }
 
     /** Île du joueur, s'il se trouve dans son périmètre. */
@@ -122,8 +138,8 @@ final class HoloService {
         return null;
     }
 
-    private void show(Player player, Tip tip, Location location, Settings settings) {
-        String name = PREFIX + player.getUniqueId();
+    private void show(Player player, Tip tip, Location wanted, Location location, float height, Settings settings) {
+        String name = PREFIX + player.getUniqueId() + "_" + (++sequence);
         TextHologramData data = new TextHologramData(name, location);
         data.setText(new ArrayList<>(tip.lines()));
         data.setPersistent(false);
@@ -145,13 +161,12 @@ final class HoloService {
         }
         // La zone doit être connue avant que FancyHolograms montre l'hologramme (HologramShowEvent)
         if (settings.clickBox()) {
-            float height = tip.lines().size() * settings.lineHeight() * settings.scale() + 0.1f;
             boxes.register(name, new ClickBoxes.Box(ClickBoxes.newEntityId(), UUID.randomUUID(), player.getUniqueId(),
                     location.clone(), settings.clickWidth() * settings.scale(), height));
         }
         Visibility.ManualVisibility.addDistantViewer(name, player.getUniqueId());
         manager.addHologram(hologram);
-        shown.put(player.getUniqueId(), new Shown(name, tip, location));
+        shown.put(player.getUniqueId(), new Shown(name, tip, wanted));
         hologram.forceUpdateShownStateFor(player);
     }
 

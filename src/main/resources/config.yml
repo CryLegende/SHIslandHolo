@@ -10,6 +10,10 @@
 #  Clic droit : lance la commande du conseil (clé « click »), ou le cache
 #  s'il n'en a pas. Les conseils cachés sont retenus par joueur.
 #
+#  Quand des blocs occupent la place de l'hologramme (île construite,
+#  point d'apparition déplacé), il prend la place libre la plus proche
+#  (section « placement »).
+#
 #  Commandes :
 #    /conseil (alias /conseils)  Réaffiche tous les conseils cachés.
 #    /conseil cacher             Cache le conseil affiché (joueurs Bedrock, sans clic).
@@ -46,6 +50,24 @@ hologram:
   scale: 1.0
   # Rafraîchissement, en secondes, des placeholders écrits dans les lignes.
   placeholder-refresh-seconds: 10
+
+placement:
+  # Hologramme enfoui : à sa création, si des blocs touchent son volume, il
+  # prend la place libre la plus proche. Ordre de recherche : au-dessus de sa
+  # position, puis devant le point d'apparition de l'île (/is sethome), puis
+  # devant le joueur. Rien n'est vérifié tant que l'hologramme reste affiché.
+  # Sans place libre, il garde sa position.
+  enabled: true
+  # Largeur, en blocs, qui doit être libre autour de l'hologramme.
+  # La hauteur suit le nombre de lignes du conseil.
+  width: 3.0
+  # Montée maximale, en blocs, au-dessus de chaque position essayée.
+  max-rise: 6
+  # Distance, en blocs, entre le point d'apparition (ou le joueur) et l'hologramme.
+  distance: 4.0
+  # Hauteur, en blocs, du bas de l'hologramme au-dessus des pieds, devant le
+  # point d'apparition ou le joueur.
+  height: 0.5
 
 click-box:
   # Zone cliquable posée sur l'hologramme (invisible, envoyée au joueur seul).

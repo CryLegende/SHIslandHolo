@@ -18,9 +18,9 @@ import java.util.logging.Logger;
  * @param sound      clé du son (« block.note_block.pling »), ou null
  */
 record Settings(int refreshTicks, Vector position, int viewDistance, Display.Billboard billboard, Color background,
-                boolean textShadow, float scale, int placeholderRefreshMs, boolean clickBox, float clickWidth,
-                float lineHeight, long clickCooldownMs, boolean announce, String sound, float soundVolume,
-                float soundPitch, List<Tip> tips) {
+                boolean textShadow, float scale, int placeholderRefreshMs, Placement.Rules placement,
+                boolean clickBox, float clickWidth, float lineHeight, long clickCooldownMs, boolean announce,
+                String sound, float soundVolume, float soundPitch, List<Tip> tips) {
 
     static Settings load(FileConfiguration config, ConfigurationSection tipsSection, Logger logger) {
         Vector position = parseVector(config.getString("hologram.position", "0,4,8"));
@@ -45,6 +45,12 @@ record Settings(int refreshTicks, Vector position, int viewDistance, Display.Bil
                 config.getBoolean("hologram.text-shadow", true),
                 (float) config.getDouble("hologram.scale", 1.0),
                 Math.max(1, config.getInt("hologram.placeholder-refresh-seconds", 10)) * 1000,
+                new Placement.Rules(
+                        config.getBoolean("placement.enabled", true),
+                        clamp(config.getDouble("placement.width", 3.0), 0, 16),
+                        (int) clamp(config.getInt("placement.max-rise", 6), 0, 32),
+                        clamp(config.getDouble("placement.distance", 4.0), 0, 16),
+                        clamp(config.getDouble("placement.height", 0.5), -4, 8)),
                 config.getBoolean("click-box.enabled", true),
                 (float) config.getDouble("click-box.width", 3.0),
                 (float) config.getDouble("click-box.line-height", 0.25),
@@ -94,6 +100,10 @@ record Settings(int refreshTicks, Vector position, int viewDistance, Display.Bil
             }
         }
         return List.copyOf(tips);
+    }
+
+    private static double clamp(double value, double min, double max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     private static Vector parseVector(String text) {
