@@ -43,7 +43,7 @@ hologram:
   #   center  centre de l'île + « position ».
   # Un conseil qui a sa propre position (clé « position » dans tips.yml) la
   # garde, quel que soit ce réglage.
-  anchor: home
+  anchor: center
   # anchor home : distance horizontale, en blocs, entre le joueur et le milieu
   # de l'hologramme. Avec une zone cliquable de 3 de large, 3.5 met son bord à
   # 2 blocs du joueur (portée d'un clic en survie : 3 blocs).
