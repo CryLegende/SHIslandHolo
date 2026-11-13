@@ -15,7 +15,7 @@
 #                Opérateurs : ==  !=  >=  <=  >  <  contains
 #                Les nombres se comparent comme des nombres, le reste comme
 #                du texte (sans tenir compte des majuscules).
-#                Exemple : '%questcreator_activequest_name% != /'
+#                Exemple : '%player_world% == world'
 #    lines       Lignes de l'hologramme. Codes & et balises MiniMessage
 #                (<gradient:...>, <b>...) acceptés, placeholders aussi.
 #    click       Commande lancée par le joueur au clic droit, sans « / ».
@@ -25,46 +25,40 @@
 #                Par défaut : hologram.anchor de config.yml (devant le
 #                point d'apparition de l'île).
 #
-#  Le nom d'un conseil (bienvenue, defi...) sert à retenir ceux que le joueur
+#  Le nom d'un conseil (bienvenue, monde...) sert à retenir ceux que le joueur
 #  a cachés ou déjà vus : le renommer le fait réapparaître chez tout le monde.
 # ============================================================================
 
 tips:
 
-  # Île de départ (niveau 66 à la création).
+  # Île de départ.
   bienvenue:
-    levels: 0-71
-    click: quest
+    levels: 0-9
+    click: help
     lines:
       - '<b><gradient:#F48854:#FDFA8C>Bienvenue sur ton île</gradient></b>'
       - ''
-      - '&7Ton &ecoffre de départ&7, ton &earbre'
-      - '&7et ton &egénérateur à cobble &7sont là'
-      - '&7pour te lancer.'
+      - '&7Prends le temps de faire le tour de'
+      - '&7ton île : tout commence ici.'
       - ''
-      - '&7La suite se joue dans les &edéfis &7:'
-      - '&7chacun en débloque de nouveaux.'
-      - ''
-      - '&eClic droit &7: ouvrir les défis'
+      - '&eClic droit &7: ouvrir l''aide'
       - '&8Clic gauche : cacher ce conseil'
 
-  # Défi en cours et sa progression, mis à jour toutes les 10 secondes.
-  defi:
-    levels: 72+
-    click: quest
+  # Condition évaluée avec PlaceholderAPI, mise à jour toutes les 10 secondes.
+  monde:
+    levels: 10+
     conditions:
-      - '%questcreator_activequest_name% != /'
+      - '%player_world% == world'
     lines:
-      - '<b><gradient:#F48854:#FDFA8C>Ton défi en cours</gradient></b>'
+      - '<b><gradient:#F48854:#FDFA8C>Ton monde</gradient></b>'
       - ''
-      - '&e%questcreator_activequest_objective%'
+      - '&e%player_world%'
       - ''
-      - '&eClic droit &7: voir tes défis'
-      - '&8Clic gauche : cacher ce conseil'
+      - '&8Clic : cacher ce conseil'
 
   # Seul sur son île.
   inviter:
-    levels: 72+
+    levels: 10+
     members: 1
     lines:
       - '<b><gradient:#F48854:#FDFA8C>Joue avec tes amis</gradient></b>'
@@ -75,63 +69,13 @@ tips:
       - ''
       - '&8Clic : cacher ce conseil'
 
-  metiers:
-    levels: 100+
-    click: jobs
-    lines:
-      - '<b><gradient:#F48854:#FDFA8C>Les métiers</gradient></b>'
-      - ''
-      - '&7Chaque jour, des &emissions de métier'
-      - '&7qui rapportent des &epoints &7à dépenser'
-      - '&7dans leur boutique.'
-      - ''
-      - '&eClic droit &7: ouvrir les métiers'
-      - '&8Clic gauche : cacher ce conseil'
-
-  ameliorations:
-    levels: 150+
-    click: is upgrade
-    lines:
-      - '<b><gradient:#F48854:#FDFA8C>Améliore ton île</gradient></b>'
-      - ''
-      - '&7Taille, membres, warps, PNJ :'
-      - '&7tout se débloque dans les &eaméliorations&7.'
-      - ''
-      - '&eClic droit &7: ouvrir les améliorations'
-      - '&8Clic gauche : cacher ce conseil'
-
-  vote:
-    levels: 250+
-    lines:
-      - '<b><gradient:#F48854:#FDFA8C>Vote pour le serveur</gradient></b>'
-      - ''
-      - '&7Chaque vote te donne des &erécompenses'
-      - '&7et fait connaître SkyHand &c❤'
-      - '&e/vote'
-      - ''
-      - '&8Clic : cacher ce conseil'
-
-  # Page publique du joueur et de son île sur le site (skyhandprofils).
-  page:
-    levels: 300+
-    click: profil
-    lines:
-      - '<b><gradient:#F48854:#FDFA8C>Ta page sur le site</gradient></b>'
-      - ''
-      - '&7Ton île et tes stats ont leur page :'
-      - '&7partage-la à tes amis.'
-      - ''
-      - '&eClic droit &7: obtenir le lien'
-      - '&8Clic gauche : cacher ce conseil'
-
   classement:
-    levels: 400+
-    click: is top
+    levels: 100+
+    click: spawn
     lines:
       - '<b><gradient:#F48854:#FDFA8C>Niveau %superior_island_level%</gradient></b>'
       - ''
-      - '&7Ton île compte parmi les grandes :'
-      - '&7vois où elle se place au &eclassement&7.'
+      - '&7Ton île compte parmi les grandes.'
       - ''
-      - '&eClic droit &7: ouvrir le classement'
+      - '&eClic droit &7: retourner au spawn'
       - '&8Clic gauche : cacher ce conseil'
